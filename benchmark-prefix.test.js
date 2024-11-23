@@ -18,3 +18,4 @@ const results = radix.getByPrefix("Sample text entry number 500");
 console.timeEnd("Search Time");
 
 console.log(`Found ${results.length} results.`);
+console.log(results);

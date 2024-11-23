@@ -53,6 +53,28 @@ export default class Tree {
         }
         return res
     }
+
+    getByFuzzy(word, maxEditDistance, sortBy) {
+        let iterator = new Iterator(this.root)
+        iterator.seekPrefixFuzzy(word)
+        let res = []
+        while (true) {
+            let nextData = iterator.nextFuzzy(word, maxEditDistance);
+            if (nextData.found) {
+                res.push({key: nextData.key, value: nextData.value, distance: nextData.distance})
+                continue
+            }
+            break
+        }
+        switch (sortBy) {
+            case "LEX": return res;
+            case "DIST":
+                res.sort((a, b) => a.distance - b.distance)
+                return res
+            default:
+                return res;
+        }
+    }
 }
 
 class Txn {

@@ -86,63 +86,72 @@ export default class Iterator {
         }
     }
 
-    nextFuzzy(word, maxEditDistance) {
-        const levenshteinDistance = (a, b) => {
-            const dp = Array(a.length + 1)
-                .fill(null)
-                .map(() => Array(b.length + 1).fill(0));
+    levenshteinDistance(a, b) {
+        const dp = Array(a.length + 1)
+            .fill(null)
+            .map(() => Array(b.length + 1).fill(0));
 
-            for (let i = 0; i <= a.length; i++) dp[i][0] = i;
-            for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+        for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+        for (let j = 0; j <= b.length; j++) dp[0][j] = j;
 
-            for (let i = 1; i <= a.length; i++) {
-                for (let j = 1; j <= b.length; j++) {
-                    const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-                    dp[i][j] = Math.min(
-                        dp[i - 1][j] + 1, // Deletion
-                        dp[i][j - 1] + 1, // Insertion
-                        dp[i - 1][j - 1] + cost // Substitution
-                    );
-                }
+        for (let i = 1; i <= a.length; i++) {
+            for (let j = 1; j <= b.length; j++) {
+                const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                dp[i][j] = Math.min(
+                    dp[i - 1][j] + 1, // Deletion
+                    dp[i][j - 1] + 1, // Insertion
+                    dp[i - 1][j - 1] + cost // Substitution
+                );
             }
-            return dp[a.length][b.length];
         }
+        return dp[a.length][b.length];
+    }
+
+    nextFuzzy(word, maxEditDistance) {
 
         if (this.node && !this.leafNode) {
             this.leafNode = this.node.minimumLeaf();
         }
 
         while (this.leafNode) {
-            const keyStr = String.fromCharCode(...this.leafNode.key);
-            if (this.patternMatch) {
-                // Match pattern
-                if (this.pattern.test(keyStr)) {
-                    const res = this.leafNode;
-                    this.leafNode = this.leafNode.nextLeaf;
-                    if (!this.leafNode) {
-                        this.node = null;
-                    }
-                    return { key: res.key, value: res.value, found: true };
-                } else {
-                    this.leafNode = this.leafNode.nextLeaf;
-                    if (!this.leafNode) {
-                        this.node = null;
-                    }
-                }
-            } else {
-                // Match prefix
-                const distance = levenshteinDistance(this.leafNode.key, word)
+            if (word.length - maxEditDistance <= this.leafNode.key.length <= word.length + maxEditDistance) {
+                const distance = this.levenshteinDistance(this.leafNode.key, word)
                 if (distance <= maxEditDistance) {
                     const res = this.leafNode;
                     this.leafNode = this.leafNode.nextLeaf;
                     if (!this.leafNode) {
                         this.node = null;
                     }
-                    return { key: res.key, value: res.value, found: true, distance: distance };
+                    return { key: res.key, value: res.value, found: true, distance: distance};
                 } else {
-                    this.leafNode = null;
-                    this.node = null;
-                    break;
+                    this.leafNode = this.leafNode.nextLeaf;
+                }
+            }
+        }
+
+        this.leafNode = null;
+        this.node = null;
+        return { key: null, value: null, found: false };
+    }
+
+    previousFuzzy(word, maxEditDistance) {
+        if (this.node && !this.leafNode) {
+            this.leafNode = this.node.minimumLeaf();
+            this.leafNode = this.leafNode.prevLeaf
+        }
+
+        while (this.leafNode) {
+            if (word.length - maxEditDistance <= this.leafNode.key.length <= word.length + maxEditDistance) {
+                const distance = this.levenshteinDistance(this.leafNode.key, word)
+                if (distance <= maxEditDistance) {
+                    const res = this.leafNode;
+                    this.leafNode = this.leafNode.prevLeaf;
+                    if (!this.leafNode) {
+                        this.node = null;
+                    }
+                    return { key: res.key, value: res.value, found: true };
+                } else {
+                    this.leafNode = this.leafNode.prevLeaf;
                 }
             }
         }

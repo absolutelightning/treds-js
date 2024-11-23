@@ -12,6 +12,8 @@ radix.insert("cis", 2)
 radix.insert("dog", 3)
 radix.insert("dogs", 4)
 
+radix.insert("apple", 5)
+
 console.log(radix.getByPrefix("c"))
 console.log(radix.getByPrefix("d"))
 console.log(radix.getByPrefix("ca"))
@@ -24,4 +26,4 @@ console.log("after deleting cis")
 console.log(radix.getByPrefix("ci"))
 
 console.log(radix.getByFuzzy("cot", 2))
-console.log(radix.getByFuzzy("cit", 3, 'DIST'))
+console.log(radix.getByFuzzy("cit", 5, 'DIST'))

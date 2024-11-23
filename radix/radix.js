@@ -39,14 +39,18 @@ export default class Tree {
         return this.root.get(key);
     }
 
-    getByPrefix(prefix) {
+    getByPrefix(prefix, limit = 100, offset = 0) {
         let iterator = new Iterator(this.root)
         iterator.seekPrefix(prefix)
         let res = []
         while (true) {
             let nextData = iterator.next()
-            if (nextData.found) {
+            if (nextData.found &&  offset === 0 && limit > 0) {
                 res.push({key: nextData.key, value: nextData.value})
+                limit--;
+                continue
+            } else if (offset > 0 && limit > 0) {
+                offset--;
                 continue
             }
             break
@@ -54,15 +58,33 @@ export default class Tree {
         return res
     }
 
-    getByFuzzy(word, maxEditDistance, sortBy) {
+    getByFuzzy(word, maxEditDistance, sortBy = 'DIST', limit = 100, offset = 0) {
         let iterator = new Iterator(this.root)
         iterator.seekPrefixFuzzy(word)
         let res = []
         while (true) {
             let nextData = iterator.nextFuzzy(word, maxEditDistance);
-            if (nextData.found) {
+            if (nextData.found && offset === 0 && limit > 0) {
                 res.push({key: nextData.key, value: nextData.value, distance: nextData.distance})
+                limit--;
                 continue
+            } else if (offset > 0 && limit > 0) {
+                offset--;
+                continue;
+            }
+            break
+        }
+        iterator = new Iterator(this.root)
+        iterator.seekPrefixFuzzy(word)
+        while (true) {
+            let prevData = iterator.previousFuzzy(word, maxEditDistance);
+            if (prevData.found && offset === 0 && limit > 0) {
+                res.push({key: prevData.key, value: prevData.value, distance: prevData.distance})
+                limit--;
+                continue
+            } else if (offset > 0 && limit > 0) {
+                offset--;
+                continue;
             }
             break
         }
